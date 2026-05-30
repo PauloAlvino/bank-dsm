@@ -1,81 +1,82 @@
 import 'package:flutter/material.dart';
-import 'formulario.dart';
+import 'package:intl/intl.dart';
 import '../../models/transferencia.dart';
+import '../../database/app_database.dart';
+import 'formulario.dart';
 
 class ListaTransferencias extends StatefulWidget {
-  final List<Transferencia> _transferencias = [];
+  const ListaTransferencias({super.key});
+
   @override
-  State<StatefulWidget> createState() {
-    return ListaTranferenciaState();
-  }
+  State<ListaTransferencias> createState() => _ListaTransferenciasState();
 }
 
-class ListaTranferenciaState extends State<ListaTransferencias> {
-  static const _tituloAppBar = 'Transferência';
-
+class _ListaTransferenciasState extends State<ListaTransferencias> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          _tituloAppBar,
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        title: const Text('Transferências'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => setState(() {}),
           ),
-        ),
-
-        backgroundColor: const Color.fromRGBO(33, 150, 243, 1),
+        ],
       ),
+      body: FutureBuilder<List<Transferencia>>(
+        future: buscarTransferencias(),
+        builder: (context, snapshot) {
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return const Center(child: CircularProgressIndicator());
+            case ConnectionState.done:
+              if (snapshot.hasError) {
+                return const Center(
+                    child: Text('Erro ao carregar transferências.'));
+              }
 
-      body: ListView.builder(
-        itemCount: widget._transferencias.length,
-        itemBuilder: (context, indice) {
-          final transferencia = widget._transferencias[indice];
-          return ItemTransferencia(transferencia);
+              final transferencias = snapshot.data ?? [];
+
+              if (transferencias.isEmpty) {
+                return const Center(
+                    child: Text('Nenhuma transferência encontrada.'));
+              }
+
+              final formatador = NumberFormat.simpleCurrency(locale: 'pt_BR');
+
+              return ListView.builder(
+                itemCount: transferencias.length,
+                itemBuilder: (context, index) {
+                  final transferencia = transferencias[index];
+                  return Card(
+                    margin: const EdgeInsets.all(8),
+                    child: ListTile(
+                      leading: const Icon(
+                        Icons.monetization_on,
+                        color: Colors.green,
+                      ),
+                      title: Text(formatador.format(transferencia.valor)),
+                      subtitle: Text('Conta: ${transferencia.numeroConta}'),
+                    ),
+                  );
+                },
+              );
+
+            default:
+              return const SizedBox.shrink();
+          }
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          print("Botão + Pressionado!");
-
-          Navigator.push(
-            context,
+        child: const Icon(Icons.add),
+        onPressed: () async {
+          await Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (context) {
-                return FormularioTransferencia();
-              },
-            ),
-          ).then((transferenciaRecebida) => _atualiza(transferenciaRecebida));
+                builder: (context) => const FormularioTransferencia()),
+          );
+          setState(() {});
         },
-        child: Icon(Icons.add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
-  }
-
-  void _atualiza(Transferencia? transferenciaRecebida) {
-    if (transferenciaRecebida != null) {
-      setState(() {
-        widget._transferencias.add(transferenciaRecebida);
-      });
-    }
-  }
-}
-
-class ItemTransferencia extends StatelessWidget {
-  final Transferencia _transferencia;
-
-  ItemTransferencia(this._transferencia);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: Icon(Icons.monetization_on),
-        title: Text(_transferencia.valor.toString()),
-        subtitle: Text(_transferencia.numeroConta.toString()),
       ),
     );
   }

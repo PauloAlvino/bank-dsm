@@ -1,16 +1,25 @@
 import 'package:flutter/material.dart';
-import 'screens/transferencia/lista.dart';
+import 'package:intl/intl.dart';
+import 'database/app_database.dart';
+import 'screens/dashboard.dart';
 
-void main() => runApp(BankApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // await testarBanco(); // chamada temporária para verificar o banco
+
+  runApp(const BankApp());
+}
 
 class BankApp extends StatelessWidget {
   const BankApp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    Intl.defaultLocale = "pt_BR";
     return MaterialApp(
-      //theme: ThemeData.dark(), // tema padronizado do flutter
-      home: ListaTransferencias(),
+      debugShowCheckedModeBanner: false,
+      home: const Dashboard(),
       
       // Configuração de tema do app
       theme: ThemeData(
@@ -60,4 +69,4 @@ class BankApp extends StatelessWidget {
       ),     
     );
   }
-} // main
+}
